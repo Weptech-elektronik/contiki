@@ -43,6 +43,9 @@
 
 #include "rpl.h"
 
+#include "lib/sensors.h"
+#include "button-sensor.h"
+
 #include <string.h>
 
 /*---------------------------------------------------------------------------*/
@@ -65,7 +68,11 @@ static mqtt_configuration conf = { MQTT_BROKER_IP,
 static mqtt_client_message msg;
 static char client_id[MQTT_CLIENT_ID_LEN];
 /*---------------------------------------------------------------------------*/
-
+typedef enum{
+  TIMER,
+  BUTTON
+} publish_reason;
+/*---------------------------------------------------------------------------*/
 void
 mqtt_event_handler(struct mqtt_connection *m, mqtt_event_t event, void *data){
   switch (event) {
@@ -141,7 +148,7 @@ client_mqtt_connect(){
 }
 /*---------------------------------------------------------------------------*/
 static void
-construct_message(mqtt_client_message* msg){
+construct_message(mqtt_client_message* msg, publish_reason reason){
   static int seq_no = 0;
 
   seq_no++;
@@ -154,11 +161,13 @@ construct_message(mqtt_client_message* msg){
       "{\"d\": {"
       "\"board_string\": \"%s\","
       "\"seq_no\": %u,"
-      "\"uptime\": %lu"
+      "\"uptime\": %lu,"
+      "\"reason\": %u"
       "}}",
       BOARD_STRING,
       seq_no,
-      clock_seconds()
+      clock_seconds(),
+      reason
       );
   if(size >= MQTT_CLIENT_PAYLOAD_LEN){
     PRINTF("MQTT_CLIENT_PAYLOAD_LEN is too small!");
@@ -168,20 +177,22 @@ construct_message(mqtt_client_message* msg){
 }
 /*---------------------------------------------------------------------------*/
 mqtt_status_t
-client_mqtt_publish(){
+client_mqtt_publish(publish_reason reason){
 
   mqtt_status_t ret = MQTT_STATUS_OK;
 
+  leds_on(LEDS_YELLOW);
   /*
    * Quick successive publishes can lock up the MQTT process, so we check
    * whether the previous message is fully out the door first.
    */
   if (conn.state == MQTT_CONN_STATE_CONNECTED_TO_BROKER &&
       !(conn.out_queue_full || !conn.out_buffer_sent)) {
-    construct_message(&msg);
+    construct_message(&msg, reason);
     ret = mqtt_publish(&conn, &msg.id, msg.topic, msg.payload, msg.size,
         MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
   }
+  leds_off(LEDS_YELLOW);
 
   return ret;
 }
@@ -192,14 +203,17 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
 
   PROCESS_BEGIN();
 
+  leds_on(LEDS_YELLOW);
   PRINTF("APP Process waiting.\n");
 
   /* Wait until we connect to the RPL DAG. */
   while (rpl_get_any_dag() == (rpl_dag_t *)NULL){
+    leds_toggle(LEDS_YELLOW);
     etimer_set(&publish_periodic_timer, CLOCK_SECOND);
     PROCESS_YIELD();
   }
   etimer_stop(&publish_periodic_timer);
+  leds_off(LEDS_YELLOW);
 
   PRINTF("APP Process started.\n");
   client_mqtt_register();
@@ -222,8 +236,12 @@ PROCESS_THREAD(mqtt_client_process, ev, data)
     }
 
     if (ev == PROCESS_EVENT_TIMER && data == &publish_periodic_timer) {
-      client_mqtt_publish();
+      client_mqtt_publish(TIMER);
       etimer_restart(&publish_periodic_timer);
+    }
+
+    if(ev == sensors_event && data == &button_sensor){
+      client_mqtt_publish(BUTTON);
     }
   }
 

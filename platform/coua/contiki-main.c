@@ -238,6 +238,7 @@ main(void)
   process_start(&tcpip_process, NULL);
 #endif /* NETSTACK_CONF_WITH_IPV6 */
 
+  leds_init();
   process_start(&sensors_process, NULL);
 
   autostart_start(autostart_processes);

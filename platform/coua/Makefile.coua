@@ -6,7 +6,7 @@ endif
 
 CONTIKI_TARGET_DIRS = .
 
-CONTIKI_TARGET_SOURCEFILES += contiki-main.c
+CONTIKI_TARGET_SOURCEFILES += contiki-main.c leds-arch.c button-sensor.c coua-sensors.c
 
 CONTIKI_SOURCEFILES += $(CONTIKI_TARGET_SOURCEFILES)
 
@@ -25,6 +25,9 @@ endif
 ifndef SMALL
   SMALL = 1
 endif
+
+### Signal that we can be programmed with cc2538-bsl
+BOARD_SUPPORTS_BSL=1
 
 ### Define the CPU directory
 CPU_FAMILY = cc13xx
