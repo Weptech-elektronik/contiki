@@ -1,0 +1,39 @@
+#  platform makefile
+
+ifndef CONTIKI
+  $(error CONTIKI not defined! You must specify where CONTIKI resides)
+endif
+
+CONTIKI_TARGET_DIRS = .
+
+CONTIKI_TARGET_SOURCEFILES += contiki-main.c leds-arch.c button-sensor.c coua-sensors.c
+
+CONTIKI_SOURCEFILES += $(CONTIKI_TARGET_SOURCEFILES)
+
+CLEAN += *.coua
+
+# We define WITH_SLIP to notify various software modules that we use SLIP
+ifeq ($(WITH_SLIP),1)
+  $(info Building with SLIP support ENABLED)
+    DEFINES += WITH_SLIP=1
+else
+  $(info Building with SLIP support DISABLED)
+    DEFINES += WITH_SLIP=0
+endif
+
+### Unless the example dictates otherwise, build with code size optimisations
+ifndef SMALL
+  SMALL = 1
+endif
+
+### Signal that we can be programmed with cc2538-bsl
+BOARD_SUPPORTS_BSL=1
+
+### Define the CPU directory
+CPU_FAMILY = cc13xx
+CONTIKI_CPU=$(CONTIKI)/cpu/cc26xx-cc13xx
+include $(CONTIKI_CPU)/Makefile.$(CPU_FAMILY)
+
+MODULES += core/net core/net/mac \
+           core/net/mac/contikimac \
+           core/net/llsec 
