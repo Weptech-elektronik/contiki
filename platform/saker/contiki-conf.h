@@ -385,18 +385,6 @@ typedef uint32_t rtimer_clock_t;
 #define CC1200_CONF_USE_GPIO2           1
 #endif /* #CC1200_CONF_USE_GPIO2 */
 
-/*
- * We go with a size that is 2 bytes smaller than the FIFO, 2 bytes being the
- * size of the Packet header in 802.15.4g. Could support up to 2047 bytes
- * because the platform has all the necessary interrupt lines connected to keep
- * the FIFO from overflowing, but that can be very hard on RAM as all the
- * necessary software buffers have to be increased to accommodate the packets.
- */
-#ifndef CC1200_CONF_MAX_PAYLOAD_LEN
-#define CC1200_CONF_MAX_PAYLOAD_LEN     126
-#endif /* CC1200_CONF_MAX_PAYLOAD_LEN */
-
-#define PACKETBUF_CONF_SIZE             (CC1200_CONF_MAX_PAYLOAD_LEN + 2)
 
 #ifndef CC1200_CONF_802154G
 #define CC1200_CONF_802154G             1
