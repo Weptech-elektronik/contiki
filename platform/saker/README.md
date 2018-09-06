@@ -220,7 +220,7 @@ double check. For this example, set `RF_BLE_CONF_ENABLED`,
 Well-Known NAT64 prefix `64:ff9b::/96`. However, Contiki's own IP64 module does
 not use that Well-Known  Prefix, but the prefix for IPv4-mapped addresses,
 `::ffff:0000/24`. Hence, change the address to
-`0000:0000:0000:0000:0000:ffff:b8ac:7cb` instead. (See core/net/ip/ip64-addr.h
+`0000:0000:0000:0000:0000:ffff:b8ac:7cbd` instead. (See core/net/ip/ip64-addr.h
 with links to the relevant RFCs for the gory details.)
 3. Other configurations for your device, e.g. `BOARD_CONF_DEBUGGER_DEVPACK` if
 you are using a Sensortag with a Dbugger DevPack. Please refer to your device's
